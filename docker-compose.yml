@@ -49,6 +49,8 @@ services:
     volumes:
       - ./src/frontend:/app
     command: npm run dev
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3001}
     ports:
       - "3030:3000"
     networks:

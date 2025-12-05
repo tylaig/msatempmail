@@ -21,6 +21,8 @@ interface InboxProps {
 export function Inbox({ email, onSelectMessage, selectedId }: InboxProps) {
     const [messages, setMessages] = useState<Message[]>([]);
 
+    const [refreshKey, setRefreshKey] = useState(0);
+
     // Initial fetch
     useEffect(() => {
         const fetchMessages = async () => {
@@ -36,7 +38,7 @@ export function Inbox({ email, onSelectMessage, selectedId }: InboxProps) {
             }
         };
         fetchMessages();
-    }, [email]);
+    }, [email, refreshKey]);
 
     // WebSocket connection
     useEffect(() => {
@@ -69,7 +71,7 @@ export function Inbox({ email, onSelectMessage, selectedId }: InboxProps) {
                     Estamos ouvindo... qualquer mensagem que chegar aparece aqui em segundos.
                 </p>
                 <button
-                    onClick={() => window.location.reload()}
+                    onClick={() => setRefreshKey(prev => prev + 1)}
                     className="mt-6 bg-[#00FF94] text-black font-bold py-2 px-6 rounded-full text-sm hover:bg-[#00cc76]"
                 >
                     Atualizar agora

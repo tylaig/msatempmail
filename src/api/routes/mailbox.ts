@@ -2,9 +2,15 @@ import { Elysia, t } from 'elysia';
 import { redis, getMailboxKey, getMessageKey, EXPIRATION_TIME } from '../redis';
 
 export const mailboxRoutes = new Elysia({ prefix: '/mailbox' })
-    .post('/create', async () => {
-        // Generate random address
-        const randomPart = Math.random().toString(36).substring(2, 8);
+    .post('/create', async ({ body }) => {
+        const { customName } = body as { customName?: string };
+
+        // Generate random address or use custom
+        let randomPart = Math.random().toString(36).substring(2, 8);
+        if (customName && /^[a-zA-Z0-9._-]+$/.test(customName)) {
+            randomPart = customName;
+        }
+
         // In a real app, domain should be dynamic or from config
         const domain = process.env.MAIL_DOMAIN || 'localhost';
         const address = `${randomPart}@${domain}`;

@@ -13,6 +13,29 @@ export default function Home() {
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [isExpired, setIsExpired] = useState(false);
 
+  const [customName, setCustomName] = useState('');
+
+  // Load from LocalStorage on mount
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('msamail_email');
+    const savedExpiry = localStorage.getItem('msamail_expiry');
+
+    if (savedEmail && savedExpiry) {
+      const expiryTime = parseInt(savedExpiry, 10);
+      const now = Date.now();
+      const remainingSeconds = Math.floor((expiryTime - now) / 1000);
+
+      if (remainingSeconds > 0) {
+        setEmail(savedEmail);
+        setTtl(remainingSeconds);
+      } else {
+        // Expired, clear it
+        localStorage.removeItem('msamail_email');
+        localStorage.removeItem('msamail_expiry');
+      }
+    }
+  }, []);
+
   // Timer logic
   useEffect(() => {
     if (!ttl) return;
@@ -29,6 +52,8 @@ export default function Home() {
         clearInterval(interval);
         setTimeLeft('00:00:00');
         setIsExpired(true);
+        localStorage.removeItem('msamail_email'); // Clear on expire
+        localStorage.removeItem('msamail_expiry');
         return;
       }
 
@@ -49,11 +74,22 @@ export default function Home() {
     setIsExpired(false);
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const res = await fetch(`${apiUrl}/mailbox/create`, { method: 'POST' });
+      const res = await fetch(`${apiUrl}/mailbox/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customName: customName || undefined })
+      });
       const data = await res.json();
+
       setEmail(data.address);
       setTtl(data.ttl); // Reset TTL
       setSelectedMessageId(null);
+
+      // Save to LocalStorage
+      const expiryTimestamp = Date.now() + (data.ttl * 1000);
+      localStorage.setItem('msamail_email', data.address);
+      localStorage.setItem('msamail_expiry', expiryTimestamp.toString());
+
     } catch (error) {
       console.error('Failed to generate email', error);
     } finally {
@@ -72,6 +108,8 @@ export default function Home() {
     setTtl(null);
     setSelectedMessageId(null);
     setIsExpired(false);
+    localStorage.removeItem('msamail_email');
+    localStorage.removeItem('msamail_expiry');
   }
 
   return (
@@ -109,7 +147,7 @@ export default function Home() {
                 </button>
               </div>
             ) : (
-              <div className="text-center space-y-8">
+              <div className="text-center space-y-8 w-full max-w-md">
                 <div className="relative w-24 h-24 mx-auto">
                   <div className="absolute inset-0 border-4 border-[#00FF94]/20 rounded-full animate-ping"></div>
                   <div className="absolute inset-0 border-4 border-[#00FF94] rounded-full flex items-center justify-center">
@@ -117,18 +155,24 @@ export default function Home() {
                   </div>
                 </div>
 
-                <button
-                  onClick={generateEmail}
-                  disabled={loading}
-                  className="bg-[#00FF94] hover:bg-[#00cc76] text-black font-bold py-4 px-12 rounded-full text-lg transition-all shadow-[0_0_20px_rgba(0,255,148,0.3)]"
-                >
-                  {loading ? 'Gerando...' : 'Gerar novo e-mail temporário'}
-                </button>
+                <div className="space-y-4">
+                  <div className="bg-[#151A23] p-2 rounded-xl border border-gray-800 flex items-center w-full">
+                    <input
+                      type="text"
+                      placeholder="Nome personalizado (opcional)"
+                      value={customName}
+                      onChange={(e) => setCustomName(e.target.value)}
+                      className="bg-transparent text-white w-full px-4 py-2 outline-none placeholder-gray-600"
+                    />
+                  </div>
 
-                {/* Fake input for visual consistency with reference 4 */}
-                <div className="bg-[#151A23] p-4 rounded-xl border border-gray-800 flex items-center justify-between w-full max-w-md mx-auto opacity-50">
-                  <span className="text-gray-500">usuario_...</span>
-                  <span className="text-gray-600 flex items-center gap-1 text-sm"><Copy className="w-3 h-3" /> Copiar</span>
+                  <button
+                    onClick={generateEmail}
+                    disabled={loading}
+                    className="w-full bg-[#00FF94] hover:bg-[#00cc76] text-black font-bold py-4 rounded-xl text-lg transition-all shadow-[0_0_20px_rgba(0,255,148,0.3)]"
+                  >
+                    {loading ? 'Gerando...' : 'Gerar E-mail Temporário'}
+                  </button>
                 </div>
               </div>
             )}

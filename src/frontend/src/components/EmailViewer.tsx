@@ -49,95 +49,101 @@ export function EmailViewer({ messageId, onBack }: EmailViewerProps) {
     if (loading || !message) {
         return (
             <div className="flex items-center justify-center h-full text-[#00FF94]">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00FF94]"></div>
+                <div className="w-12 h-12 border-4 border-[#00FF94] border-t-transparent rounded-full animate-spin"></div>
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col h-full bg-[#151A23]">
+        <div className="flex flex-col h-full bg-[#0B0E14]/80 backdrop-blur-md">
             {/* Header */}
-            <div className="p-6 border-b border-gray-800 bg-[#0B0E14]/50">
+            <div className="p-6 border-b border-[#ffffff05] bg-[#0B0E14]/50">
                 <div className="flex justify-between items-start mb-4">
-                    <div className="bg-gray-800/50 rounded-lg px-4 py-2 w-full">
-                        <div className="flex gap-2 text-sm mb-1">
-                            <span className="text-gray-500 font-bold">De:</span>
-                            <span className="text-gray-300">{message.from}</span>
-                        </div>
-                        <div className="flex gap-2 text-sm mb-1">
-                            <span className="text-gray-500 font-bold">Para:</span>
-                            <span className="text-gray-300">{message.to}</span>
-                        </div>
-                        <div className="flex gap-2 text-sm">
-                            <span className="text-gray-500 font-bold">Assunto:</span>
-                            <span className="text-white font-medium">{message.subject}</span>
+                    <div className="bg-[#151A23] border border-[#333] rounded-xl p-4 w-full shadow-lg">
+                        <h2 className="text-xl font-bold text-white mb-4 leading-tight">{message.subject}</h2>
+
+                        <div className="flex flex-col gap-2 text-sm">
+                            <div className="flex items-center gap-2">
+                                <span className="text-gray-500 font-medium w-12">De:</span>
+                                <span className="text-[#00FF94] font-mono bg-[#00FF94]/10 px-2 py-0.5 rounded">{message.from}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-gray-500 font-medium w-12">Para:</span>
+                                <span className="text-gray-300 font-mono">{message.to}</span>
+                            </div>
                         </div>
                     </div>
-                    <div className="ml-4 text-xs text-gray-500 font-mono whitespace-nowrap pt-2">
-                        Data: {format(new Date(message.date), 'dd de MMMM, yyyy, HH:mm')}
+                    <div className="ml-4 text-xs text-gray-500 font-mono whitespace-nowrap pt-2 bg-[#151A23] px-3 py-1 rounded-full border border-[#333]">
+                        {format(new Date(message.date), 'dd MMM yyyy, HH:mm')}
                     </div>
                 </div>
             </div>
 
             {/* Body */}
-            <div className="flex-1 overflow-y-auto p-8 bg-[#151A23] text-gray-300">
+            <div className="flex-1 overflow-y-auto p-8 bg-[#0B0E14]/30 text-gray-300 custom-scrollbar">
                 {viewMode === 'visual' ? (
                     message.html ? (
                         <div
-                            className="prose prose-invert max-w-none"
+                            className="prose prose-invert max-w-none prose-a:text-[#00FF94] prose-headings:text-white"
                             dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(message.html) }}
                         />
                     ) : (
-                        <pre className="whitespace-pre-wrap font-sans text-gray-300">
+                        <pre className="whitespace-pre-wrap font-sans text-gray-300 leading-relaxed">
                             {message.text}
                         </pre>
                     )
                 ) : (
-                    <pre className="whitespace-pre-wrap font-mono text-xs text-green-400 bg-black p-4 rounded-lg border border-gray-800">
-                        {JSON.stringify(message, null, 2)}
-                    </pre>
+                    <div className="relative group">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button className="bg-[#00FF94] text-black text-xs px-2 py-1 rounded font-bold">Copiar JSON</button>
+                        </div>
+                        <pre className="whitespace-pre-wrap font-mono text-xs text-[#00FF94] bg-[#050505] p-6 rounded-xl border border-[#333] shadow-inner">
+                            {JSON.stringify(message, null, 2)}
+                        </pre>
+                    </div>
                 )}
             </div>
 
             {/* Footer Actions */}
-            <div className="p-4 border-t border-gray-800 bg-[#0B0E14] space-y-4">
+            <div className="p-4 border-t border-[#ffffff05] bg-[#0B0E14]/90 backdrop-blur-xl space-y-4">
 
                 {/* View Toggle */}
-                <div className="flex border border-gray-700 rounded-lg overflow-hidden w-full">
+                <div className="flex bg-[#151A23] p-1 rounded-lg w-full max-w-md mx-auto">
                     <button
                         onClick={() => setViewMode('visual')}
-                        className={`flex-1 py-2 text-sm font-medium transition-colors ${viewMode === 'visual' ? 'bg-[#00FF94]/10 text-[#00FF94] border-b-2 border-[#00FF94]' : 'text-gray-400 hover:bg-gray-800'}`}
+                        className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${viewMode === 'visual' ? 'bg-[#00FF94] text-black shadow-lg' : 'text-gray-400 hover:text-white'}`}
                     >
-                        Visual
+                        <div className="flex items-center justify-center gap-2">
+                            <Eye className="w-4 h-4" /> Visual
+                        </div>
                     </button>
                     <button
                         onClick={() => setViewMode('raw')}
-                        className={`flex-1 py-2 text-sm font-medium transition-colors ${viewMode === 'raw' ? 'bg-[#00FF94]/10 text-[#00FF94] border-b-2 border-[#00FF94]' : 'text-gray-400 hover:bg-gray-800'}`}
+                        className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${viewMode === 'raw' ? 'bg-[#00FF94] text-black shadow-lg' : 'text-gray-400 hover:text-white'}`}
                     >
-                        Código-fonte (RAW)
+                        <div className="flex items-center justify-center gap-2">
+                            <Code className="w-4 h-4" /> Código-fonte
+                        </div>
                     </button>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="grid grid-cols-4 gap-4">
+                <div className="flex justify-between items-center pt-2">
                     <button
                         onClick={onBack}
-                        className="col-span-1 border border-[#00FF94] text-[#00FF94] rounded-lg py-2 flex items-center justify-center gap-2 text-sm hover:bg-[#00FF94]/10 transition-colors"
+                        className="text-gray-400 hover:text-white flex items-center gap-2 text-sm transition-colors px-4 py-2 rounded-lg hover:bg-[#ffffff05]"
                     >
-                        <ArrowLeft className="w-4 h-4" /> Voltar
+                        <ArrowLeft className="w-4 h-4" /> Voltar para Inbox
                     </button>
 
-                    <button className="col-span-1 border border-[#00FF94] text-[#00FF94] rounded-lg py-2 flex items-center justify-center gap-2 text-sm hover:bg-[#00FF94]/10 transition-colors">
-                        <Download className="w-4 h-4" /> Baixar
-                    </button>
-
-                    <button className="col-span-1 border border-[#00FF94] text-[#00FF94] rounded-lg py-2 flex items-center justify-center gap-2 text-sm hover:bg-[#00FF94]/10 transition-colors">
-                        <Copy className="w-4 h-4" /> Copiar
-                    </button>
-
-                    <button className="col-span-1 border border-[#00FF94] text-[#00FF94] rounded-lg py-2 flex items-center justify-center gap-2 text-sm hover:bg-[#00FF94]/10 transition-colors">
-                        <Maximize2 className="w-4 h-4" /> Expandir
-                    </button>
+                    <div className="flex gap-2">
+                        <button className="border border-[#333] hover:border-[#00FF94] text-gray-400 hover:text-[#00FF94] rounded-lg p-2 transition-all" title="Baixar">
+                            <Download className="w-5 h-5" />
+                        </button>
+                        <button className="border border-[#333] hover:border-[#00FF94] text-gray-400 hover:text-[#00FF94] rounded-lg p-2 transition-all" title="Expandir">
+                            <Maximize2 className="w-5 h-5" />
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

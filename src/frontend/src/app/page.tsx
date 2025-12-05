@@ -113,95 +113,142 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-[#0B0E14] text-white font-sans flex flex-col items-center">
+    <main className="min-h-screen bg-[#050505] text-white font-sans flex flex-col items-center relative overflow-hidden">
+      {/* Background Elements */}
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#00FF94] rounded-full blur-[150px] opacity-10 pointer-events-none"></div>
+      <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[#00FF94] rounded-full blur-[150px] opacity-5 pointer-events-none"></div>
+
       {/* Header */}
-      <header className="w-full p-6 flex justify-center items-center">
+      <header className="w-full p-6 flex justify-between items-center container max-w-6xl z-10">
         <div className="flex items-center gap-2">
-          <Rocket className="w-6 h-6 text-[#00FF94]" />
-          <span className="text-xl font-bold text-white">Meu Super App</span>
+          <div className="w-8 h-8 bg-[#00FF94] rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(0,255,148,0.3)]">
+            <Rocket className="w-5 h-5 text-black" />
+          </div>
+          <span className="text-xl font-bold text-white font-heading tracking-tight">MSAMail</span>
         </div>
+        <button className="bg-[#121212] border border-[#333] hover:border-[#00FF94] text-sm px-4 py-2 rounded-full transition-colors">
+          Começar Grátis
+        </button>
       </header>
 
-      <div className="container max-w-5xl px-4 py-8 space-y-8">
+      <div className="container max-w-6xl px-4 py-12 flex-1 flex flex-col z-10">
 
-        {/* Generator Box */}
         {!email || isExpired ? (
-          // Empty/Expired State or Initial State
-          <div className="flex flex-col items-center justify-center h-[60vh] space-y-8">
-            {isExpired ? (
-              <div className="bg-[#151A23] p-12 rounded-2xl border border-gray-800 text-center max-w-lg shadow-2xl">
-                <div className="flex justify-center mb-6">
-                  <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center">
-                    <span className="text-6xl">😓</span>
-                  </div>
-                </div>
-                <h2 className="text-2xl font-bold mb-4">Este e-mail temporário expirou</h2>
-                <p className="text-gray-400 mb-8">
-                  O link ou e-mail temporário que você está tentando acessar não está mais disponível.
-                </p>
-                <button
-                  onClick={generateEmail}
-                  className="bg-[#00FF94] hover:bg-[#00cc76] text-black font-bold py-3 px-8 rounded-lg transition-all w-full"
-                >
-                  Criar novo e-mail
-                </button>
-              </div>
-            ) : (
-              <div className="text-center space-y-8 w-full max-w-md">
-                <div className="relative w-24 h-24 mx-auto">
-                  <div className="absolute inset-0 border-4 border-[#00FF94]/20 rounded-full animate-ping"></div>
-                  <div className="absolute inset-0 border-4 border-[#00FF94] rounded-full flex items-center justify-center">
-                    <div className="w-16 h-16 bg-[#00FF94] rounded-full opacity-20"></div>
-                  </div>
-                </div>
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-12 mt-8">
+            {/* Hero Text */}
+            <div className="lg:w-1/2 space-y-6 text-center lg:text-left">
+              <h1 className="text-5xl lg:text-7xl font-bold font-heading leading-tight text-balance">
+                Gerar E-mail <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00FF94] to-[#00cc76] text-glow">Temporário</span>
+              </h1>
+              <p className="text-gray-400 text-lg max-w-xl mx-auto lg:mx-0 leading-relaxed">
+                Crie um endereço de e-mail temporário e anônimo instantaneamente para proteger sua privacidade e evitar spam indesejado.
+              </p>
 
-                <div className="space-y-4">
-                  <div className="bg-[#151A23] p-2 rounded-xl border border-gray-800 flex items-center w-full">
-                    <input
-                      type="text"
-                      placeholder="Nome personalizado (opcional)"
-                      value={customName}
-                      onChange={(e) => setCustomName(e.target.value)}
-                      className="bg-transparent text-white w-full px-4 py-2 outline-none placeholder-gray-600"
-                    />
-                  </div>
+              <button
+                onClick={generateEmail}
+                className="bg-[#00FF94] hover:bg-[#00cc76] text-black font-bold text-lg py-4 px-10 rounded-full transition-all shadow-[0_0_20px_rgba(0,255,148,0.4)] hover:shadow-[0_0_30px_rgba(0,255,148,0.6)] hover:scale-105 active:scale-95"
+              >
+                {loading ? 'Gerando...' : 'Gerar Agora'}
+              </button>
 
-                  <button
-                    onClick={generateEmail}
-                    disabled={loading}
-                    className="w-full bg-[#00FF94] hover:bg-[#00cc76] text-black font-bold py-4 rounded-xl text-lg transition-all shadow-[0_0_20px_rgba(0,255,148,0.3)]"
-                  >
-                    {loading ? 'Gerando...' : 'Gerar E-mail Temporário'}
-                  </button>
+              {/* Trust Badges */}
+              <div className="flex flex-wrap justify-center lg:justify-start gap-6 pt-8">
+                <div className="flex items-center gap-2 bg-[#121212] border border-[#222] px-4 py-2 rounded-lg">
+                  <div className="w-2 h-2 bg-[#00FF94] rounded-full"></div>
+                  <span className="text-sm font-medium">100% Privacidade</span>
+                </div>
+                <div className="flex items-center gap-2 bg-[#121212] border border-[#222] px-4 py-2 rounded-lg">
+                  <div className="w-2 h-2 bg-[#00FF94] rounded-full"></div>
+                  <span className="text-sm font-medium">Entrega Instantânea</span>
                 </div>
               </div>
-            )}
+            </div>
+
+            {/* Generator Card */}
+            <div className="lg:w-1/2 w-full">
+              <div className="glass-panel p-1 rounded-3xl box-glow">
+                <div className="bg-[#050505]/80 backdrop-blur-xl rounded-[22px] p-8 border border-[#ffffff05]">
+                  <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                      <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                    </div>
+                    <div className="text-xs text-gray-500 font-mono">SECURE CONNECTION</div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div>
+                      <label className="text-xs text-gray-400 uppercase tracking-wider mb-2 block ml-1">Personalizar (Opcional)</label>
+                      <div className="bg-[#121212] p-4 rounded-xl border border-[#333] focus-within:border-[#00FF94] transition-colors flex items-center">
+                        <input
+                          type="text"
+                          placeholder="ex: meu-nome"
+                          value={customName}
+                          onChange={(e) => setCustomName(e.target.value)}
+                          className="bg-transparent text-white w-full outline-none placeholder-gray-600 font-mono"
+                        />
+                        <span className="text-gray-500 select-none">@mail.orbvia.co</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-[#121212] p-6 rounded-xl border border-[#333] flex items-center justify-between group cursor-pointer hover:border-[#00FF94]/50 transition-all" onClick={generateEmail}>
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-[#00FF94]/10 flex items-center justify-center text-[#00FF94]">
+                          <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+                        </div>
+                        <div>
+                          <div className="text-white font-medium">Gerar Aleatório</div>
+                          <div className="text-xs text-gray-500">Clique para criar instantaneamente</div>
+                        </div>
+                      </div>
+                      <div className="w-8 h-8 rounded-full bg-[#222] flex items-center justify-center group-hover:bg-[#00FF94] group-hover:text-black transition-colors">
+                        →
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
-          <>
+          <div className="max-w-5xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Active State Header */}
-            <div className="bg-[#151A23] border border-[#00FF94]/30 rounded-xl p-4 md:p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-[0_0_30px_rgba(0,255,148,0.05)] relative overflow-hidden">
-              {/* Glow effect */}
+            <div className="glass-panel rounded-2xl p-6 mb-6 relative overflow-hidden group">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#00FF94] to-transparent opacity-50"></div>
 
-              <div className="flex items-center gap-4 bg-[#0B0E14] px-6 py-3 rounded-lg border border-gray-800 w-full md:w-auto flex-1">
-                <span className="text-xl md:text-2xl font-mono text-white truncate">{email}</span>
-                <button
-                  onClick={copyToClipboard}
-                  className="bg-[#00FF94] hover:bg-[#00cc76] text-black p-2 rounded-md transition-colors ml-auto"
-                >
-                  <Copy className="w-5 h-5" />
-                </button>
-              </div>
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex-1 w-full md:w-auto">
+                  <label className="text-xs text-gray-400 uppercase tracking-wider mb-2 block">Seu E-mail Temporário</label>
+                  <div className="flex items-center gap-4 bg-[#050505]/50 p-4 rounded-xl border border-[#ffffff10] group-hover:border-[#00FF94]/30 transition-colors">
+                    <span className="text-xl md:text-2xl font-mono text-white truncate flex-1">{email}</span>
+                    <button
+                      onClick={copyToClipboard}
+                      className="bg-[#00FF94] hover:bg-[#00cc76] text-black px-4 py-2 rounded-lg font-bold text-sm transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+                    >
+                      <Copy className="w-4 h-4" /> Copiar
+                    </button>
+                  </div>
+                </div>
 
-              <div className="flex items-center gap-4">
-                <span className="text-[#00FF94] font-mono text-2xl tracking-widest">TTL: {timeLeft}</span>
-                <div className="w-10 h-10 rounded-full border-4 border-[#00FF94] border-t-transparent animate-spin"></div>
+                <div className="flex items-center gap-6 bg-[#050505]/30 px-6 py-4 rounded-xl border border-[#ffffff05]">
+                  <div className="text-right">
+                    <div className="text-xs text-gray-400 uppercase tracking-wider">Expira em</div>
+                    <div className="text-[#00FF94] font-mono text-2xl font-bold tabular-nums">{timeLeft}</div>
+                  </div>
+                  <div className="relative w-12 h-12">
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle cx="24" cy="24" r="20" stroke="#333" strokeWidth="4" fill="transparent" />
+                      <circle cx="24" cy="24" r="20" stroke="#00FF94" strokeWidth="4" fill="transparent" strokeDasharray={125.6} strokeDashoffset={125.6 * (1 - (ttl || 0) / 900)} className="transition-all duration-1000 ease-linear" />
+                    </svg>
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Content Area */}
-            <div className="bg-[#151A23] rounded-2xl border border-gray-800 overflow-hidden min-h-[500px] flex flex-col relative">
+            <div className="glass-panel rounded-2xl overflow-hidden min-h-[600px] flex flex-col relative shadow-2xl">
               {selectedMessageId ? (
                 <EmailViewer
                   messageId={selectedMessageId}
@@ -209,10 +256,6 @@ export default function Home() {
                 />
               ) : (
                 <>
-                  <div className="p-4 border-b border-gray-800 text-[#00FF94] text-sm font-medium flex items-center justify-center gap-2">
-                    <span className="w-2 h-2 bg-[#00FF94] rounded-full animate-pulse"></span>
-                    Aguardando novos e-mails...
-                  </div>
                   <Inbox
                     email={email}
                     onSelectMessage={setSelectedMessageId}
@@ -220,25 +263,44 @@ export default function Home() {
                   />
 
                   {/* Footer Actions */}
-                  <div className="p-4 border-t border-gray-800 flex justify-between items-center bg-[#0B0E14]/50">
+                  <div className="p-4 border-t border-[#ffffff05] flex justify-between items-center bg-[#050505]/50 backdrop-blur-md">
                     <button
                       onClick={generateEmail}
-                      className="border border-[#00FF94] text-[#00FF94] px-6 py-2 rounded-lg text-sm hover:bg-[#00FF94]/10 transition-colors"
+                      className="text-gray-400 hover:text-white text-sm flex items-center gap-2 transition-colors"
                     >
-                      GERAR NOVO ENDEREÇO →
+                      <RefreshCw className="w-4 h-4" /> Gerar Novo
                     </button>
 
                     <button
                       onClick={deleteMailbox}
-                      className="bg-[#1E293B] text-gray-400 px-4 py-2 rounded-lg text-sm hover:text-white hover:bg-red-900/30 transition-colors flex items-center gap-2"
+                      className="text-red-500 hover:text-red-400 text-sm flex items-center gap-2 transition-colors px-4 py-2 rounded-lg hover:bg-red-500/10"
                     >
-                      APAGAR CAIXA <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4" /> Apagar Caixa
                     </button>
                   </div>
                 </>
               )}
             </div>
-          </>
+          </div>
+        )}
+
+        {/* Feature Grid (Only show on home) */}
+        {(!email || isExpired) && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20">
+            {[
+              { title: 'Criar em 2 segundos', desc: 'Gere novos endereços de e-mail com apenas um clique.', icon: '⚡' },
+              { title: 'Mensagens em Tempo Real', desc: 'Visualize mensagens instantaneamente via WebSocket.', icon: '📨' },
+              { title: 'Proteção Anti-Spam', desc: 'Mantenha sua caixa principal limpa de lixo eletrônico.', icon: '🛡️' },
+            ].map((feature, i) => (
+              <div key={i} className="glass-panel p-6 rounded-2xl hover:bg-[#ffffff05] transition-colors group">
+                <div className="w-12 h-12 bg-[#00FF94]/10 rounded-xl flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
+                  {feature.icon}
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2">{feature.title}</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">{feature.desc}</p>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </main>

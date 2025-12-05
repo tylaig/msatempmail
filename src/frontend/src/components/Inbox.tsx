@@ -41,24 +41,59 @@ export function Inbox({ email, onSelectMessage, selectedId }: InboxProps) {
     }, [email, refreshKey]);
 
     // WebSocket connection
-    useEffect(() => {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-        const wsUrl = apiUrl.replace(/^http/, 'ws') + `/ws/inbox/${email}`;
-        const ws = new WebSocket(wsUrl);
+    const [isConnected, setIsConnected] = useState(false);
 
-        ws.onmessage = (event) => {
-            try {
-                const payload = JSON.parse(event.data);
-                if (payload.type === 'NEW_EMAIL') {
-                    setMessages((prev) => [payload.data, ...prev]);
+    // WebSocket connection
+    useEffect(() => {
+        if (!email) return;
+
+        let ws: WebSocket | null = null;
+        let reconnectTimer: NodeJS.Timeout;
+        let isMounted = true;
+
+        const connect = () => {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+            const wsUrl = apiUrl.replace(/^http/, 'ws') + `/ws/inbox/${email}`;
+
+            console.log('Connecting to WS:', wsUrl);
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                if (isMounted) setIsConnected(true);
+                console.log('WS Connected');
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const payload = JSON.parse(event.data);
+                    if (payload.type === 'NEW_EMAIL') {
+                        setMessages((prev) => [payload.data, ...prev]);
+                    }
+                } catch (e) {
+                    console.error('WS message parse error', e);
                 }
-            } catch (e) {
-                console.error('WS message parse error', e);
-            }
+            };
+
+            ws.onclose = () => {
+                if (isMounted) setIsConnected(false);
+                console.log('WS Closed. Reconnecting in 3s...');
+                reconnectTimer = setTimeout(() => {
+                    if (isMounted) connect();
+                }, 3000);
+            };
+
+            ws.onerror = (err) => {
+                console.error('WS Error', err);
+                ws?.close();
+            };
         };
 
+        connect();
+
         return () => {
-            ws.close();
+            isMounted = false;
+            if (ws) ws.close();
+            clearTimeout(reconnectTimer);
         };
     }, [email]);
 
@@ -70,6 +105,12 @@ export function Inbox({ email, onSelectMessage, selectedId }: InboxProps) {
                 <p className="max-w-xs text-center text-sm">
                     Estamos ouvindo... qualquer mensagem que chegar aparece aqui em segundos.
                 </p>
+                {!isConnected && (
+                    <div className="mt-2 text-xs text-yellow-500 flex items-center gap-2">
+                        <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span>
+                        Reconectando...
+                    </div>
+                )}
                 <button
                     onClick={() => setRefreshKey(prev => prev + 1)}
                     className="mt-6 bg-[#00FF94] text-black font-bold py-2 px-6 rounded-full text-sm hover:bg-[#00cc76]"

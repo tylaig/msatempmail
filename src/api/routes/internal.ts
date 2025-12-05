@@ -32,8 +32,11 @@ export const internalRoutes = new Elysia({ prefix: '/internal' })
             // Check if mailbox exists (has TTL)
             const exists = await redis.exists(mailboxKey);
             if (!exists) {
-                console.log(`Mailbox ${address} does not exist or expired. Skipping.`);
-                continue;
+                console.log(`Mailbox ${address} does not exist. Auto-creating for incoming email.`);
+                // Auto-create mailbox with default TTL
+                await redis.rpush(mailboxKey, "INIT");
+                await redis.lpop(mailboxKey);
+                await redis.expire(mailboxKey, EXPIRATION_TIME);
             }
 
             const messageId = randomUUID();

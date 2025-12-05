@@ -23,8 +23,8 @@ exports.save_email = function (next, connection) {
         to: transaction.rcpt_to,
         subject: transaction.header.get('subject'),
         headers: transaction.header.headers_decoded,
-        body: transaction.body.bodytext,
-        html: transaction.body.bodytext, // Haraka body handling can be complex, simplifying for now
+        body: transaction.body ? transaction.body.bodytext : '',
+        html: transaction.body ? transaction.body.bodytext : '', // Haraka body handling can be complex, simplifying for now
         date: new Date().toISOString()
     };
 

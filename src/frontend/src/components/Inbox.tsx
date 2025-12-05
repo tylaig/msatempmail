@@ -82,8 +82,8 @@ export function Inbox({ email, onSelectMessage, selectedId }: InboxProps) {
                 }, 3000);
             };
 
-            ws.onerror = (err) => {
-                console.error('WS Error', err);
+            ws.onerror = () => {
+                // Silent error, reconnection will handle it
                 ws?.close();
             };
         };

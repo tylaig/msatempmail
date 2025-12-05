@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
+import DOMPurify from 'dompurify';
 import { ArrowLeft, Download, Copy, Maximize2, Code, Eye } from 'lucide-react';
 
 interface EmailViewerProps {
@@ -83,7 +84,7 @@ export function EmailViewer({ messageId, onBack }: EmailViewerProps) {
                     message.html ? (
                         <div
                             className="prose prose-invert max-w-none"
-                            dangerouslySetInnerHTML={{ __html: message.html }}
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(message.html) }}
                         />
                     ) : (
                         <pre className="whitespace-pre-wrap font-sans text-gray-300">

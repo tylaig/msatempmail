@@ -1,0 +1,364 @@
+📘 PRD — Plataforma de E-mails Temporários com Haraka SMTP + API própria
+
+Versão: 1.0
+Responsável: Samuel (Founder / Visionário / Dono do domínio do caos)
+Arquitetura principal: Haraka (SMTP), Node.js/Bun (API), Redis (Storage TTL), Next.js 15 (Frontend), Docker Compose (Infra)
+
+1. Visão Geral do Produto
+
+A plataforma será um provedor completo de e-mails temporários com domínio próprio, totalmente independente de serviços terceiros, oferecendo:
+
+Servidor SMTP real (entrada) via Haraka
+
+Validação DKIM, SPF e DMARC
+
+Geração de e-mails temporários com TTL
+
+Armazenamento e leitura de mensagens via API REST/WebSocket
+
+Interface moderna estilo TempMail, mas high-tech/clean
+
+Infra própria para isolamento, privacidade e performance
+
+Suporte multi-domínio no futuro
+
+O sistema permitirá que usuários criem e-mails descartáveis para receber códigos, cadastros e testes, diretamente sob seu próprio domínio.
+
+2. Objetivo Principal
+
+Criar um sistema completo de Recepção, Armazenamento, Exibição e Descarte Automático de e-mails recebidos via domínio configurado com MX próprio, sem depender de soluções externas.
+
+O sistema deve ser:
+
+Rápido (latência quase instantânea)
+
+Seguro (focado em privacidade e isolamento)
+
+Fácil de escalar
+
+Facílimo de integrar com qualquer SaaS futuro do Samuel
+
+3. Público-alvo
+
+Usuários que querem e-mails descartáveis
+
+Desenvolvedores que precisam testar fluxos de verificação
+
+Donos de negócio que não querem depender de TempMail/Guerrilla Mail
+
+Internamente: qualquer produto do Samuel que necessite dessa funcionalidade
+
+4. Proposta de Valor
+
+Infra própria = zero riscos de perda de serviço
+
+Alta privacidade (não indexado, isolado, não rastreado)
+
+Recepção em tempo real via WebSocket
+
+Domínio próprio com DKIM configurado para evitar SPAM Folder
+
+Estilo TempMail premium com UX moderna
+
+5. Arquitetura Técnica
+🔹 5.1 Componentes Principais
+Haraka SMTP Server
+
+Recebe todos os e-mails enviados ao domínio ou subdomínio (ex: @inbox.meusuper.app)
+
+Plugins principais:
+
+save_to_api.js: Enviar JSON do e-mail para API
+
+dkim_sign (para domínios que enviarem no futuro)
+
+dnsbl (opcional)
+
+rcpt_to.in_host_list (filtrar apenas domínios aceitos)
+
+access (anti-abuso)
+
+Porta: 25 (entrada)
+
+API Backend (Node.js / Bun + Elysia)
+
+Responsável por:
+
+Criar e-mails temporários
+
+Registrar mensagens recebidas
+
+Fornecer inbox via REST
+
+Enviar mensagens em tempo real via WebSockets (inbox live)
+
+Gerenciar TTL das caixas
+
+Autenticação interna (via API Key entre Haraka → API)
+
+Endpoints:
+
+Método	Rota	Função
+POST	/mailbox/create	Cria uma caixa temporária
+GET	/mailbox/:address	Lista mensagens
+GET	/message/:id	Mostra mensagem completa
+POST	/internal/save-email	Endpoint privado para o Haraka salvar e-mails
+DELETE	/mailbox/:address	Expira caixa manualmente
+WS	/ws/inbox/:address	Stream em tempo real
+Redis (Armazenamento + TTL)
+
+Estrutura:
+
+mailbox:<email> {
+   ttl: timestamp,
+   messages: [ids]
+}
+
+message:<id> {
+   from,
+   to,
+   subject,
+   text,
+   html,
+   date
+}
+
+
+TTL automático via Redis expire.
+
+Frontend (Next.js 15)
+
+UI moderna estilo TempMail
+
+Geração instantânea de endereço
+
+Copiar para área de transferência
+
+Inbox automática (SSE ou WebSocket)
+
+Leitura da mensagem em modal
+
+Tema minimalista e elegante (preto, branco, azul ou verde dependendo da marca)
+
+Infra / DevOps
+
+Docker Compose com:
+
+haraka
+
+api
+
+redis
+
+nginx (reverse proxy + TLS)
+
+Firewall com porta 25 liberada
+
+Domain DNS:
+
+MX
+
+SPF
+
+DKIM (selector: mail)
+
+DMARC com política none inicialmente
+
+6. Fluxo de Funcionamento
+🔹 6.1 Geração da mailbox
+
+Usuário acessa frontend
+
+Clica “Gerar e-mail temporário”
+
+API cria endereço único e salva TTL no Redis
+
+Front exibe endereço e abre WebSocket para inbox
+
+🔹 6.2 Recepção do e-mail
+
+E-mail chega no Haraka via porta 25
+
+Haraka identifica o domínio
+
+Plugin save_to_api.js envia o conteúdo + metadados para a API
+
+API valida o endereço
+
+Armazena no Redis
+
+API envia push pelo WebSocket para a sessão do usuário
+
+Inbox atualiza automaticamente
+
+🔹 6.3 Expiração automática
+
+Redis TTL dispara
+
+Back-end remove mailbox
+
+Mensagens associadas são apagadas
+
+Caso haja WebSocket aberto, usuário vê “caixa expirada”
+
+7. Requisitos Funcionais
+RF-01 — Criar caixa temporária
+
+Deve gerar endereço único (exemplo: a9f2b7@seudominio.com)
+
+TTL configurável (ex: 15 minutos)
+
+Salvar endereço no Redis
+
+RF-02 — Receber e-mails
+
+Receber via Haraka
+
+Repassar via API interna
+
+Armazenar no Redis
+
+Exibir em 1 segundo no frontend
+
+RF-03 — Listar mensagens
+
+Exibir assunto, remetente, preview do body
+
+RF-04 — Ler mensagem completa
+
+Exibir HTML seguro (sanitizado)
+
+Mostrar headers básicos
+
+RF-05 — Expiração automática
+
+Limpar mensagens e caixa ao expirar
+
+RF-06 — WebSocket live inbox
+
+Mensagens novas devem aparecer instantaneamente
+
+RF-07 — DKIM
+
+E-mails enviados do sistema (futuro) devem ser assinados
+
+Recepção deve validar assinatura no header (opcional)
+
+8. Requisitos Não Funcionais
+RNF-01 — Segurança
+
+Limitar tamanho máximo de e-mail (50 KB)
+
+Sanitizar HTML antes de exibir
+
+TLS obrigatório no frontend/backend
+
+API interna autenticada via Bearer Key
+
+Rate-limit no endpoint de create mailbox
+
+RNF-02 — Performance
+
+Inbox deve atualizar em < 1s
+
+Suportar 1.000 e-mails simultâneos com latência mínima
+
+RNF-03 — Escalabilidade
+
+Redis clusterável
+
+API stateless
+
+Haraka pode ser escalado com balanceamento MX múltiplo
+
+RNF-04 — Observabilidade
+
+Logs estruturados (pino.js)
+
+Métricas com Prometheus + Grafana (opcional)
+
+9. Roadmap
+FASE 1 — MVP (1 a 3 dias)
+
+Subir Haraka com container
+
+Configurar plugin save_to_api.js
+
+Criar API mínima:
+
+salvar e-mail
+
+listar inbox
+
+criar mailbox
+
+Redis integrado
+
+Configurar domínio (MX/SPF)
+
+Front simples com inbox atualizando a cada 5s
+
+FASE 2 — Beta (3 a 7 dias)
+
+WebSocket para inbox real-time
+
+HTML sanitizado
+
+UI bonita estilo TempMail Pro
+
+DKIM configurado e validado
+
+Dashboard interno para logs
+
+Controle de TTL e expiração automática
+
+FASE 3 — Produção (7 a 14 dias)
+
+Suporte multi-domínio
+
+API Key para desenvolvedores
+
+Modo privado (senha para caixa)
+
+Exportar mensagem em .eml
+
+Notificações push (opcional)
+
+CDN para assets
+
+10. Riscos & Mitigações
+Risco	Possível impacto	Mitigação
+Porta 25 bloqueada	Não recebe e-mail	Usar VPS com 25 liberada (Hetzner / Contabo)
+IP em blacklist	E-mails não chegam	Não enviar nada pelo servidor
+Abuso (uso massivo)	Queda de performance	Rate-limit + máx 1 mailbox ativa por IP
+E-mails maliciosos	XSS	Sanitizar HTML
+TTL não limpo	Memória do Redis explode	Cron de limpeza + Redis EXPIRE
+11. Critérios de Aceite
+
+O MVP será considerado pronto quando:
+
+Caixa temporária é criada e recebe e-mails pelo domínio
+
+Haraka envia e-mails para a API corretamente
+
+API armazena e retorna mensagens
+
+Frontend mostra inbox funcionando
+
+Expiração funciona automaticamente
+
+DKIM está ativo e validado
+
+12. Entrega Final Esperada
+
+Docker Compose FULL (Haraka + API + Redis + Nginx)
+
+API documentada em Swagger ou Markdown
+
+Interface funcional em Next.js
+
+Configurações de domínio prontas
+
+Plugin de Haraka funcionando 100%
+
+Sistema pronto para ser usado como SaaS futuramente

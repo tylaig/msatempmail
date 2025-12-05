@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  haraka:
+    build: ./haraka
+    container_name: msamail_haraka
+    restart: always
+    ports:
+      - "25:25"
+    volumes:
+      - ./haraka:/usr/local/haraka
+    networks:
+      - msamail_net
+    depends_on:
+      - api
+
+  api:
+    image: oven/bun:latest
+    container_name: msamail_api
+    restart: always
+    working_dir: /app
+    volumes:
+      - ./src/api:/app
+    command: bun run --watch index.ts
+    ports:
+      - "3001:3000"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    networks:
+      - msamail_net
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:alpine
+    container_name: msamail_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - msamail_net
+
+  frontend:
+    image: node:20-alpine
+    container_name: msamail_frontend
+    restart: always
+    working_dir: /app
+    volumes:
+      - ./src/frontend:/app
+    command: npm run dev
+    ports:
+      - "3030:3000"
+    networks:
+      - msamail_net
+    depends_on:
+      - api
+
+networks:
+  msamail_net:
+    driver: bridge

@@ -18,18 +18,88 @@ exports.load_save_to_api_ini = function () {
 
 exports.save_email = function (next, connection) {
     const transaction = connection.transaction;
+    
+    // Get the raw email stream
+    let rawEmail = '';
+    let bodyText = '';
+    let bodyHtml = '';
+    
+    // Try to get body content
+    if (transaction.body) {
+        if (typeof transaction.body.bodytext === 'string') {
+            rawEmail = transaction.body.bodytext;
+        } else if (Buffer.isBuffer(transaction.body.bodytext)) {
+            rawEmail = transaction.body.bodytext.toString('utf-8');
+        }
+        
+        // Try to extract text and html from body if available
+        if (transaction.body && transaction.body.bodytext) {
+            const bodyContent = typeof transaction.body.bodytext === 'string' 
+                ? transaction.body.bodytext 
+                : transaction.body.bodytext.toString('utf-8');
+            
+            // Get boundary from content-type header if multipart
+            let boundary = null;
+            const contentType = transaction.header.get('content-type') || '';
+            const boundaryMatch = contentType.match(/boundary\s*=\s*["']?([^"'\s;]+)/i);
+            if (boundaryMatch) {
+                boundary = boundaryMatch[1];
+            }
+            
+            // Simple parsing for multipart emails
+            // Look for HTML parts - improved regex to handle various formats
+            const htmlPattern = boundary 
+                ? new RegExp(`Content-Type:\\s*text/html[\\s\\S]*?\\r?\\n\\r?\\n([\\s\\S]*?)(?=--${boundary.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|$)`, 'i')
+                : /Content-Type:\s*text\/html[\s\S]*?\r?\n\r?\n([\s\S]*?)(?=--[^\r\n]+|Content-Type:|$)/i;
+            
+            const htmlMatch = bodyContent.match(htmlPattern);
+            if (htmlMatch && htmlMatch[1]) {
+                bodyHtml = htmlMatch[1]
+                    .replace(/Content-Transfer-Encoding:[\s\S]*?\r?\n/gi, '')
+                    .replace(/Content-Type:[\s\S]*?\r?\n/gi, '')
+                    .replace(/charset=[^\r\n]*/gi, '')
+                    .replace(/^[\r\n]+|[\r\n]+$/g, '')
+                    .trim();
+            }
+            
+            // Look for text parts - improved regex
+            const textPattern = boundary
+                ? new RegExp(`Content-Type:\\s*text/plain[\\s\\S]*?\\r?\\n\\r?\\n([\\s\\S]*?)(?=--${boundary.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|Content-Type:|$)`, 'i')
+                : /Content-Type:\s*text\/plain[\s\S]*?\r?\n\r?\n([\s\S]*?)(?=--[^\r\n]+|Content-Type:|$)/i;
+            
+            const textMatch = bodyContent.match(textPattern);
+            if (textMatch && textMatch[1]) {
+                bodyText = textMatch[1]
+                    .replace(/Content-Transfer-Encoding:[\s\S]*?\r?\n/gi, '')
+                    .replace(/Content-Type:[\s\S]*?\r?\n/gi, '')
+                    .replace(/charset=[^\r\n]*/gi, '')
+                    .replace(/^[\r\n]+|[\r\n]+$/g, '')
+                    .trim();
+            }
+            
+            // If no multipart found, use the body as text or html
+            if (!bodyHtml && !bodyText && bodyContent) {
+                const cleanContent = bodyContent.trim();
+                // Check if it's HTML
+                if (cleanContent.startsWith('<') || cleanContent.includes('<html') || cleanContent.includes('<body') || cleanContent.includes('<!DOCTYPE')) {
+                    bodyHtml = cleanContent;
+                } else if (cleanContent.length > 0) {
+                    bodyText = cleanContent;
+                }
+            }
+        }
+    }
+    
     const email = {
         from: transaction.mail_from,
         to: transaction.rcpt_to,
         subject: transaction.header.get('subject'),
         headers: transaction.header.headers_decoded,
-        body: transaction.body ? transaction.body.bodytext : '',
-        html: transaction.body ? transaction.body.bodytext : '', // Haraka body handling can be complex, simplifying for now
+        body: rawEmail, // Keep raw body for reference
+        text: bodyText,
+        html: bodyHtml,
         date: new Date().toISOString()
     };
-
-    // In a real scenario, we should parse the body parts (text/html) better.
-    // For now, we send what we have.
 
     const postData = JSON.stringify(email);
 

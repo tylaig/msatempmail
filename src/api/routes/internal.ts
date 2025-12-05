@@ -11,7 +11,46 @@ export const internalRoutes = new Elysia({ prefix: '/internal' })
         }
     })
     .post('/save-email', async ({ body, set }) => {
-        const { to, from, subject, body: emailBody, html, headers, date } = body as any;
+        const { to, from, subject, body: emailBody, html, text, headers, date } = body as any;
+
+        // Parse email content if not already parsed
+        let parsedText = text || '';
+        let parsedHtml = html || '';
+        
+        // If we have raw body but no parsed content, try to parse it
+        if (emailBody && !parsedText && !parsedHtml) {
+            const bodyStr = typeof emailBody === 'string' ? emailBody : String(emailBody);
+            
+            // Try to extract HTML and text from multipart
+            const htmlMatch = bodyStr.match(/Content-Type:\s*text\/html[^]*?([\s\S]*?)(?=--[^\r\n]+|$)/i);
+            if (htmlMatch) {
+                parsedHtml = htmlMatch[1]
+                    .replace(/Content-Transfer-Encoding:[^\r\n]*/gi, '')
+                    .replace(/Content-Type:[^\r\n]*/gi, '')
+                    .replace(/charset=[^\r\n]*/gi, '')
+                    .replace(/^[\r\n]+|[\r\n]+$/g, '')
+                    .trim();
+            }
+            
+            const textMatch = bodyStr.match(/Content-Type:\s*text\/plain[^]*?([\s\S]*?)(?=--[^\r\n]+|Content-Type:|$)/i);
+            if (textMatch) {
+                parsedText = textMatch[1]
+                    .replace(/Content-Transfer-Encoding:[^\r\n]*/gi, '')
+                    .replace(/Content-Type:[^\r\n]*/gi, '')
+                    .replace(/charset=[^\r\n]*/gi, '')
+                    .replace(/^[\r\n]+|[\r\n]+$/g, '')
+                    .trim();
+            }
+            
+            // If no multipart found, check if it's HTML or plain text
+            if (!parsedHtml && !parsedText && bodyStr) {
+                if (bodyStr.trim().startsWith('<') || bodyStr.includes('<html') || bodyStr.includes('<body')) {
+                    parsedHtml = bodyStr;
+                } else {
+                    parsedText = bodyStr;
+                }
+            }
+        }
 
         // 'to' comes as an object or array from Haraka usually, we need to parse the address
         // Assuming Haraka sends a simplified object or we parse it here.
@@ -48,15 +87,18 @@ export const internalRoutes = new Elysia({ prefix: '/internal' })
             const messageId = randomUUID();
             const messageKey = getMessageKey(messageId);
 
+            // Clean subject from newlines
+            const cleanSubject = subject ? subject.replace(/\n/g, ' ').trim() : '';
+
             const messageData = {
                 id: messageId,
-                from: typeof from === 'object' ? from.address : from,
+                from: typeof from === 'object' ? (from.address || from.original || JSON.stringify(from)) : from,
                 to: address,
-                subject,
-                text: emailBody,
-                html,
+                subject: cleanSubject,
+                text: parsedText,
+                html: parsedHtml,
                 date: date || new Date().toISOString(),
-                headers: JSON.stringify(headers)
+                headers: typeof headers === 'string' ? headers : JSON.stringify(headers)
             };
 
             // Save message
@@ -79,7 +121,8 @@ export const internalRoutes = new Elysia({ prefix: '/internal' })
             from: t.Any(),
             subject: t.String(),
             body: t.String(),
-            html: t.String(),
+            html: t.Optional(t.String()),
+            text: t.Optional(t.String()),
             headers: t.Any(),
             date: t.String()
         }),

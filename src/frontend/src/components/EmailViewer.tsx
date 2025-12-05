@@ -32,7 +32,8 @@ export function EmailViewer({ messageId, onBack }: EmailViewerProps) {
         const fetchMessage = async () => {
             setLoading(true);
             try {
-                const res = await fetch(`http://localhost:3000/message/${messageId}`);
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+                const res = await fetch(`${apiUrl}/message/${messageId}`);
                 const data = await res.json();
                 setMessage(data);
             } catch (e) {

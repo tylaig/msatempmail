@@ -48,7 +48,8 @@ export default function Home() {
     setLoading(true);
     setIsExpired(false);
     try {
-      const res = await fetch('http://localhost:3001/mailbox/create', { method: 'POST' });
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${apiUrl}/mailbox/create`, { method: 'POST' });
       const data = await res.json();
       setEmail(data.address);
       setTtl(data.ttl); // Reset TTL

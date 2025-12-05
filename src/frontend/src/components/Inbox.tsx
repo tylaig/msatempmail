@@ -25,7 +25,8 @@ export function Inbox({ email, onSelectMessage, selectedId }: InboxProps) {
     useEffect(() => {
         const fetchMessages = async () => {
             try {
-                const res = await fetch(`http://localhost:3001/mailbox/${email}`);
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+                const res = await fetch(`${apiUrl}/mailbox/${email}`);
                 const data = await res.json();
                 if (data.messages) {
                     setMessages(data.messages);
@@ -39,7 +40,9 @@ export function Inbox({ email, onSelectMessage, selectedId }: InboxProps) {
 
     // WebSocket connection
     useEffect(() => {
-        const ws = new WebSocket(`ws://localhost:3001/ws/inbox/${email}`);
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        const wsUrl = apiUrl.replace(/^http/, 'ws') + `/ws/inbox/${email}`;
+        const ws = new WebSocket(wsUrl);
 
         ws.onmessage = (event) => {
             try {

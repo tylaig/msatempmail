@@ -24,7 +24,13 @@ export const internalRoutes = new Elysia({ prefix: '/internal' })
         const recipients = Array.isArray(to) ? to : [to];
 
         for (const recipient of recipients) {
-            const address = recipient.address || recipient.original || recipient; // Handle different formats
+            let address = recipient.address || recipient.original || recipient; // Handle different formats
+
+            // Sanitize address (remove < and >)
+            if (typeof address === 'string') {
+                address = address.replace(/[<>]/g, '');
+            }
+
             if (!address) continue;
 
             const mailboxKey = getMailboxKey(address);

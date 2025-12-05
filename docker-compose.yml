@@ -27,6 +27,7 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - MAIL_DOMAIN=${MAIL_DOMAIN:-localhost}
     networks:
       - msamail_net
     depends_on:

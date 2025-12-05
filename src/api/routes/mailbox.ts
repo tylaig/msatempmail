@@ -6,7 +6,7 @@ export const mailboxRoutes = new Elysia({ prefix: '/mailbox' })
         // Generate random address
         const randomPart = Math.random().toString(36).substring(2, 8);
         // In a real app, domain should be dynamic or from config
-        const domain = 'localhost'; // Or the configured domain
+        const domain = process.env.MAIL_DOMAIN || 'localhost';
         const address = `${randomPart}@${domain}`;
 
         const mailboxKey = getMailboxKey(address);
